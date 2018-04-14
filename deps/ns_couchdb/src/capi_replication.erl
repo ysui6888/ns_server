@@ -218,23 +218,9 @@ get_meta(Bucket, VBucket, DocId) ->
     end.
 
 handle_with_bucket(Req, Fun) ->
-    couch_httpd:validate_ctype(Req, "application/json"),
     {Obj} = couch_httpd:json_body_obj(Req),
-
     Bucket = proplists:get_value(<<"bucket">>, Obj),
-    BucketUUID = proplists:get_value(<<"bucketUUID">>, Obj),
-
-    case (Bucket =:= undefined
-          orelse BucketUUID =:= undefined) of
-        true ->
-            erlang:throw(bad_request);
-        _ -> true
-    end,
-    capi_frontend:with_verify_bucket_auth(
-      Req, Bucket, BucketUUID,
-      fun (_BucketConfig) ->
-              Fun(Req, Obj, Bucket)
-      end).
+    Fun(Req, Obj, Bucket).
 
 handle_with_bucket_ext(Req, Fun) ->
     handle_with_bucket(
