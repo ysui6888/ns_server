@@ -218,18 +218,6 @@ get_meta(Bucket, VBucket, DocId) ->
     end.
 
 handle_with_bucket(Req, Fun) ->
-    couch_httpd:validate_ctype(Req, "application/json"),
-    {Obj} = couch_httpd:json_body_obj(Req),
-
-    Bucket = proplists:get_value(<<"bucket">>, Obj),
-    BucketUUID = proplists:get_value(<<"bucketUUID">>, Obj),
-
-    case (Bucket =:= undefined
-          orelse BucketUUID =:= undefined) of
-        true ->
-            erlang:throw(bad_request);
-        _ -> true
-    end,
     couch_httpd:start_json_response(Req, 200, []).
 
 handle_with_bucket_ext(Req, Fun) ->
