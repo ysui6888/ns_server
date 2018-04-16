@@ -46,10 +46,7 @@ handle_pre_replicate(Bucket, Req) ->
                      validators()).
 
 handle_pre_replicate_legacy(#httpd{mochi_req = Req}, Body, Bucket) ->
-    Props = [{binary_to_list(K), V} || {K, V} <- Body],
-    {ok, validator:handle(
-           do_handle_pre_replicate(Req, _, binary_to_list(Bucket)),
-           Req, Props, validators())}.
+    {ok,  menelaus_util:reply_json(Req, {[{vbopaque, 0}]}, 200)}.
 
 reply_error(Req, Code, Error, Reason) ->
     menelaus_util:reply_json(Req,
