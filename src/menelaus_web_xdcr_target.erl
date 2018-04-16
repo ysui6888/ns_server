@@ -25,7 +25,7 @@
 -export([handle_pre_replicate/2,
 
          %% support of pre Vulcan xdcr sources, executed on ns_couchdb node
-         handle_pre_replicate_legacy/3]).
+         handle_pre_replicate_legacy/4]).
 
 validators() ->
     [validator:required(vb, _),
@@ -42,14 +42,11 @@ validate_commitopaque(Name, State) ->
 
 handle_pre_replicate(Bucket, Req) ->
     menelaus_util:assert_is_vulcan(),
-    validator:handle(do_handle_pre_replicate(Req, _, Bucket), Req, json,
+    validator:handle(do_handle_pre_replicate(Req, _, Bucket, _), Req, json,
                      validators()).
 
-handle_pre_replicate_legacy(#httpd{mochi_req = Req}, Body, Bucket) ->
-    Props = [{binary_to_list(K), V} || {K, V} <- Body],
-    {ok, validator:handle(
-           do_handle_pre_replicate(Req, _, binary_to_list(Bucket)),
-           Req, Props, validators())}.
+handle_pre_replicate_legacy(#httpd{mochi_req = Req}, VB, Bucket, CommitOpaque) ->
+    {ok, do_handle_pre_replicate(Req, VB, binary_to_list(Bucket), CommitOpaque)}.
 
 reply_error(Req, Code, Error, Reason) ->
     menelaus_util:reply_json(Req,
@@ -57,18 +54,15 @@ reply_error(Req, Code, Error, Reason) ->
                                {reason, Reason}]}, Code).
 
 
-do_handle_pre_replicate(Req, Props, Bucket) ->
-    VB = proplists:get_value(vb, Props),
-
+do_handle_pre_replicate(Req, VB, Bucket, CommitOpaque) ->
     case xdcr_dcp_streamer:get_failover_log(Bucket, VB) of
         {memcached_error, not_my_vbucket} ->
             reply_error(Req, 404, not_found, not_my_vbucket);
         FailoverLog when is_list(FailoverLog) ->
-            do_handle_pre_replicate(Req, Props, Bucket, VB, FailoverLog)
+            do_handle_pre_replicate(Req, VB, Bucket, CommitOpaque, FailoverLog)
     end.
 
-do_handle_pre_replicate(Req, Props, Bucket, VB, FailoverLog) ->
-    CommitOpaque = proplists:get_value(commitopaque, Props),
+do_handle_pre_replicate(Req, VB, Bucket, CommitOpaque, FailoverLog) ->
     {VBUUID, _} = lists:last(FailoverLog),
 
     Code =

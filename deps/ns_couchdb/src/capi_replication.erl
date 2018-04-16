@@ -220,7 +220,9 @@ get_meta(Bucket, VBucket, DocId) ->
 handle_with_bucket(Req, Fun) ->
     {Obj} = couch_httpd:json_body_obj(Req),
     Bucket = proplists:get_value(<<"bucket">>, Obj),
-    Fun(Req, Obj, Bucket).
+    VB = proplists:get_value(<<"vb">>, Obj),
+    CommitOpaque = proplists:get_value(<<"commitopaque">>, Obj),
+    Fun(Req, VB, Bucket, CommitOpaque).
 
 handle_with_bucket_ext(Req, Fun) ->
     handle_with_bucket(
@@ -239,7 +241,7 @@ handle_with_bucket_ext(Req, Fun) ->
 
 handle_pre_replicate(Req) ->
     handle_with_bucket(
-      Req, fun menelaus_web_xdcr_target:handle_pre_replicate_legacy/3).
+      Req, fun menelaus_web_xdcr_target:handle_pre_replicate_legacy/4).
 
 handle_mass_vbopaque_check(Req) ->
     handle_with_bucket(Req, fun handle_mass_vbopaque_check/3).
