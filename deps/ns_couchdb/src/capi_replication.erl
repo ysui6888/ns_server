@@ -230,11 +230,7 @@ handle_with_bucket(Req, Fun) ->
             erlang:throw(bad_request);
         _ -> true
     end,
-    capi_frontend:with_verify_bucket_auth(
-      Req, Bucket, BucketUUID,
-      fun (_BucketConfig) ->
-              Fun(Req, Obj, Bucket)
-      end).
+    couch_httpd:start_json_response(Req, 200, []).
 
 handle_with_bucket_ext(Req, Fun) ->
     handle_with_bucket(
